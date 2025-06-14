@@ -1,0 +1,227 @@
+<!-- Versión corregida -->
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Calculadora de Dosis de Ibuprofeno</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: 'Segoe UI', sans-serif;
+      background: linear-gradient(135deg, #f9f0ff, #e0f7fa);
+      padding: 2rem;
+      color: #333;
+    }
+    .container {
+      max-width: 700px;
+      margin: auto;
+      background: linear-gradient(135deg, #ffffff, #f8f8f8);
+      border-radius: 16px;
+      padding: 2rem;
+      box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+    }
+    h1 {
+      text-align: center;
+      color: #7b68ee;
+      margin-bottom: 2rem;
+    }
+    label {
+      display: block;
+      margin-top: 1rem;
+      font-weight: 600;
+    }
+    select, input[type=range], input[type=number] {
+      width: 100%;
+      padding: 0.6rem;
+      margin-top: 0.3rem;
+      border-radius: 8px;
+      border: 1px solid #ccc;
+      font-size: 1rem;
+      background: #f0f8ff;
+    }
+    .peso-display {
+      text-align: center;
+      margin-top: 0.5rem;
+      font-weight: bold;
+      color: #555;
+    }
+    .resultado {
+      margin-top: 2rem;
+      padding: 1.2rem;
+      background-color: #e6ffee;
+      border: 2px solid #20c997;
+      border-radius: 12px;
+      font-size: 1.2rem;
+      color: #155724;
+      text-align: center;
+    }
+    .oculto {
+      display: none;
+    }
+    .smiley {
+      font-size: 2rem;
+    }
+    .gradiente {
+      background: linear-gradient(90deg, #fddde6, #e0f7fa, #d4edda, #e6e6fa);
+    }
+  </style>
+</head>
+<body>
+  <div class="container gradiente">
+    <h1>Calculadora de Dosis de Ibuprofeno</h1>
+
+    <label for="tipoPaciente">Tipo de paciente</label>
+    <select id="tipoPaciente">
+      <option value="adulto">Adulto/Adolescente</option>
+      <option value="pediatrico">Pediátrico</option>
+    </select>
+
+    <div id="presentacionContainer">
+      <label for="presentacion">Presentación</label>
+      <select id="presentacion"></select>
+    </div>
+
+    <div id="edadContainer" class="oculto">
+      <label for="edad">Edad del paciente (en años)</label>
+<input type="range" id="edad" min="0" max="100" value="10" />
+<div class="peso-display" id="edadValor">10 años</div>
+    </div>
+
+    <div id="pesoContainer" class="oculto">
+      <label for="peso">Peso del paciente (kg)</label>
+      <input type="range" id="peso" min="10" max="100" value="30" />
+      <div class="peso-display" id="pesoValor">30 kg</div>
+    </div>
+
+    <div class="resultado" id="resultado">
+      Seleccione los valores para ver la dosis.
+    </div>
+  </div>
+
+  <script>
+    const tipoPaciente = document.getElementById("tipoPaciente");
+    const presentacion = document.getElementById("presentacion");
+    const presentacionContainer = document.getElementById("presentacionContainer");
+    const edadContainer = document.getElementById("edadContainer");
+    const edadInput = document.getElementById("edad");
+    const pesoContainer = document.getElementById("pesoContainer");
+    const pesoInput = document.getElementById("peso");
+    const pesoValor = document.getElementById("pesoValor");
+    const resultado = document.getElementById("resultado");
+
+    const tablaDosis2 = [
+      { min: 0.5, max: 1, dosis: "2,5 ml (½ jeringa)" },
+      { min: 1, max: 3, dosis: "5 ml (1 jeringa)" },
+      { min: 4, max: 6, dosis: "7,5 ml (1½ jeringa)" },
+      { min: 7, max: 9, dosis: "10 ml (2 jeringas)" }
+    ];
+
+    function actualizarOpcionesPresentacion() {
+      presentacion.innerHTML = "";
+      const tipo = tipoPaciente.value;
+      const opciones = tipo === "pediatrico"
+        ? [{ val: "4", txt: "4%" }, { val: "2", txt: "2%" }]
+        : [{ val: "400", txt: "400 mg" }, { val: "600", txt: "600 mg" }, { val: "800", txt: "800 mg" }];
+      opciones.forEach(op => {
+        const option = document.createElement("option");
+        option.value = op.val;
+        option.textContent = op.txt;
+        presentacion.appendChild(option);
+      });
+    }
+
+    function actualizarVista() {
+      const tipo = tipoPaciente.value;
+      const peso = parseInt(pesoInput.value);
+      const edad = parseInt(edadInput.value);
+      const concentracion = presentacion.value;
+
+      pesoValor.textContent = `${peso} kg`;
+
+if (tipo === "pediatrico" && concentracion === "4") {
+  edadContainer.classList.add("oculto");
+} else {
+  edadContainer.classList.remove("oculto");
+}
+
+      pesoContainer.classList.toggle("oculto", tipo !== "pediatrico" || concentracion === "2");
+
+      let texto = "Seleccione los valores para ver la dosis.";
+
+      if (tipo === "adulto") {
+  let mg = parseInt(concentracion);
+  let info = `<span class="smiley">😊</span><br><strong>Dosis sugerida:</strong><br>`;
+  const maxAdolescente = 1600;
+  const maxAdulto = 2400;
+
+  if (edad < 12) {
+    info = `El ibuprofeno en comprimidos está indicado a partir de los 12 años.`;
+  } else if (edad >= 12 && edad < 14) {
+    if (mg === 400) {
+      info += `1 comprimido de 400 mg cada 6 a 8 horas.<br>`;
+      info += `Dosis máxima diaria: ${maxAdolescente} mg.`;
+    } else {
+      info = `${mg} mg no recomendado para menores de 14 años.`;
+    }
+  } else if (edad >= 14 && edad < 18) {
+    if (mg === 400 || mg === 600) {
+      const frecuencia = mg === 400 ? "cada 6 a 8 horas" : "cada 6 a 8 horas";
+      info += `1 comprimido de ${mg} mg ${frecuencia}.<br>`;
+      info += `Dosis máxima diaria: ${maxAdolescente} mg.`;
+    } else if (mg === 800) {
+      info += `1 comprimido de 800 mg cada 12 horas.<br>`;
+      info += `Dosis máxima diaria: ${maxAdolescente} mg.`;
+    }
+  } else if (edad >= 18) {
+    if (mg === 400 || mg === 600) {
+      info += `1 comprimido de ${mg} mg cada 6 a 8 horas.<br>`;
+    } else if (mg === 800) {
+      info += `1 comprimido de 800 mg cada 12 horas.<br>`;
+    }
+    info += `Dosis máxima diaria: ${maxAdulto} mg.`;
+  }
+
+  texto = info;
+}
+
+ else {
+        if (concentracion === "4") {
+          const dosis = (peso * 0.125).toFixed(2);
+          texto = `<span class="smiley">👶</span><br><strong>Dosis sugerida:</strong><br>
+            ${dosis} ml cada 6 a 8 horas<br>
+            No más de 3 veces por día.`;
+        } else if (concentracion === "2") {
+          const entrada = tablaDosis2.find(e => edad >= e.min && edad <= e.max);
+          if (entrada) {
+            texto = `<span class="smiley">👶</span><br><strong>Dosis sugerida:</strong><br>
+              ${entrada.dosis} cada 6 a 8 horas<br>
+              Máximo 3 veces por día.`;
+          } else {
+            texto = "Edad fuera del rango para ibuprofeno 2%. Consulte con su pediatra.";
+          }
+        }
+      }
+
+      resultado.innerHTML = texto;
+    }
+
+    tipoPaciente.addEventListener("change", () => {
+      actualizarOpcionesPresentacion();
+      actualizarVista();
+    });
+    presentacion.addEventListener("change", actualizarVista);
+    pesoInput.addEventListener("input", actualizarVista);
+    edadInput.addEventListener("input", actualizarVista);
+
+    actualizarOpcionesPresentacion();
+    actualizarVista();
+    const edadValor = document.getElementById("edadValor");
+edadInput.addEventListener("input", () => {
+  edadValor.textContent = `${edadInput.value} años`;
+  actualizarVista();
+});
+
+  </script>
+</body>
+</html>
